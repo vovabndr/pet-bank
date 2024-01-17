@@ -27,6 +27,18 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.createAccountStmt, err = db.PrepareContext(ctx, createAccount); err != nil {
 		return nil, fmt.Errorf("error preparing query CreateAccount: %w", err)
 	}
+	if q.deleteAccountStmt, err = db.PrepareContext(ctx, deleteAccount); err != nil {
+		return nil, fmt.Errorf("error preparing query DeleteAccount: %w", err)
+	}
+	if q.getAccountStmt, err = db.PrepareContext(ctx, getAccount); err != nil {
+		return nil, fmt.Errorf("error preparing query GetAccount: %w", err)
+	}
+	if q.listAccountsStmt, err = db.PrepareContext(ctx, listAccounts); err != nil {
+		return nil, fmt.Errorf("error preparing query ListAccounts: %w", err)
+	}
+	if q.updateAccountBalanceStmt, err = db.PrepareContext(ctx, updateAccountBalance); err != nil {
+		return nil, fmt.Errorf("error preparing query UpdateAccountBalance: %w", err)
+	}
 	return &q, nil
 }
 
@@ -35,6 +47,26 @@ func (q *Queries) Close() error {
 	if q.createAccountStmt != nil {
 		if cerr := q.createAccountStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing createAccountStmt: %w", cerr)
+		}
+	}
+	if q.deleteAccountStmt != nil {
+		if cerr := q.deleteAccountStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing deleteAccountStmt: %w", cerr)
+		}
+	}
+	if q.getAccountStmt != nil {
+		if cerr := q.getAccountStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getAccountStmt: %w", cerr)
+		}
+	}
+	if q.listAccountsStmt != nil {
+		if cerr := q.listAccountsStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing listAccountsStmt: %w", cerr)
+		}
+	}
+	if q.updateAccountBalanceStmt != nil {
+		if cerr := q.updateAccountBalanceStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing updateAccountBalanceStmt: %w", cerr)
 		}
 	}
 	return err
@@ -74,15 +106,23 @@ func (q *Queries) queryRow(ctx context.Context, stmt *sql.Stmt, query string, ar
 }
 
 type Queries struct {
-	db                DBTX
-	tx                *sql.Tx
-	createAccountStmt *sql.Stmt
+	db                       DBTX
+	tx                       *sql.Tx
+	createAccountStmt        *sql.Stmt
+	deleteAccountStmt        *sql.Stmt
+	getAccountStmt           *sql.Stmt
+	listAccountsStmt         *sql.Stmt
+	updateAccountBalanceStmt *sql.Stmt
 }
 
 func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 	return &Queries{
-		db:                tx,
-		tx:                tx,
-		createAccountStmt: q.createAccountStmt,
+		db:                       tx,
+		tx:                       tx,
+		createAccountStmt:        q.createAccountStmt,
+		deleteAccountStmt:        q.deleteAccountStmt,
+		getAccountStmt:           q.getAccountStmt,
+		listAccountsStmt:         q.listAccountsStmt,
+		updateAccountBalanceStmt: q.updateAccountBalanceStmt,
 	}
 }
