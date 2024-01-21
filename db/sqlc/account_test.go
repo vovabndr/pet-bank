@@ -3,7 +3,6 @@ package db
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"github.com/stretchr/testify/require"
 	"pet-bank/utils"
 	"testing"
@@ -30,16 +29,13 @@ func createTestAccount(t *testing.T) (account Account) {
 }
 
 func TestCreateAccount(t *testing.T) {
-	fmt.Println("TestCreateAccount_Start")
 	createTestAccount(t)
 }
 
 func TestGetAccount(t *testing.T) {
-	fmt.Println("TestGetAccount_Start")
 	account1 := createTestAccount(t)
 
 	account2, err := testQueries.GetAccount(context.Background(), account1.ID)
-	fmt.Println("TestGetAccount_ID: ", account1.ID)
 	require.NoError(t, err)
 	require.NotEmpty(t, account2)
 
@@ -47,7 +43,6 @@ func TestGetAccount(t *testing.T) {
 }
 
 func TestUpdateAccountBalance(t *testing.T) {
-	fmt.Println("TestUpdateAccountBalance_Start")
 	account1 := createTestAccount(t)
 
 	arg := UpdateAccountBalanceParams{
@@ -64,7 +59,6 @@ func TestUpdateAccountBalance(t *testing.T) {
 }
 
 func TestDeleteAccount(t *testing.T) {
-	fmt.Println("TestDeleteAccount_Start")
 	account1 := createTestAccount(t)
 
 	err := testQueries.DeleteAccount(context.Background(), account1.ID)
@@ -77,7 +71,6 @@ func TestDeleteAccount(t *testing.T) {
 }
 
 func TestListAccounts(t *testing.T) {
-	fmt.Println("TestListAccounts_Start")
 	arg := ListAccountsParams{Limit: 1, Offset: 1}
 	accounts, err := testQueries.ListAccounts(context.Background(), arg)
 

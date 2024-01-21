@@ -9,6 +9,28 @@ import (
 	"context"
 )
 
+const addAccountBalance = `-- name: AddAccountBalance :one
+update accounts set balance = balance + $1 where id = $2 returning id, owner, balance, currency, created_at
+`
+
+type AddAccountBalanceParams struct {
+	Amount int64 `json:"amount"`
+	ID     int64 `json:"id"`
+}
+
+func (q *Queries) AddAccountBalance(ctx context.Context, arg AddAccountBalanceParams) (Account, error) {
+	row := q.queryRow(ctx, q.addAccountBalanceStmt, addAccountBalance, arg.Amount, arg.ID)
+	var i Account
+	err := row.Scan(
+		&i.ID,
+		&i.Owner,
+		&i.Balance,
+		&i.Currency,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const createAccount = `-- name: CreateAccount :one
 insert into accounts(owner, balance, currency) values ($1, $2, $3) returning id, owner, balance, currency, created_at
 `
@@ -91,6 +113,23 @@ select id, owner, balance, currency, created_at from accounts where id = $1
 
 func (q *Queries) GetAccount(ctx context.Context, id int64) (Account, error) {
 	row := q.queryRow(ctx, q.getAccountStmt, getAccount, id)
+	var i Account
+	err := row.Scan(
+		&i.ID,
+		&i.Owner,
+		&i.Balance,
+		&i.Currency,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const getAccountForUpdate = `-- name: GetAccountForUpdate :one
+select id, owner, balance, currency, created_at from accounts where id = $1 for no key update
+`
+
+func (q *Queries) GetAccountForUpdate(ctx context.Context, id int64) (Account, error) {
+	row := q.queryRow(ctx, q.getAccountForUpdateStmt, getAccountForUpdate, id)
 	var i Account
 	err := row.Scan(
 		&i.ID,
