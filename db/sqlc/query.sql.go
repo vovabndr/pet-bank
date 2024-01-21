@@ -32,6 +32,50 @@ func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) (A
 	return i, err
 }
 
+const createEntry = `-- name: CreateEntry :one
+insert into entries(account_id, amount) values ($1, $2) returning id, account_id, amount, created_at
+`
+
+type CreateEntryParams struct {
+	AccountID int64 `json:"account_id"`
+	Amount    int64 `json:"amount"`
+}
+
+func (q *Queries) CreateEntry(ctx context.Context, arg CreateEntryParams) (Entry, error) {
+	row := q.queryRow(ctx, q.createEntryStmt, createEntry, arg.AccountID, arg.Amount)
+	var i Entry
+	err := row.Scan(
+		&i.ID,
+		&i.AccountID,
+		&i.Amount,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const createTransfer = `-- name: CreateTransfer :one
+insert into transfers(from_account_id, to_account_id, amount) values ($1, $2, $3) returning id, from_account_id, to_account_id, amount, created_at
+`
+
+type CreateTransferParams struct {
+	FromAccountID int64 `json:"from_account_id"`
+	ToAccountID   int64 `json:"to_account_id"`
+	Amount        int64 `json:"amount"`
+}
+
+func (q *Queries) CreateTransfer(ctx context.Context, arg CreateTransferParams) (Transfer, error) {
+	row := q.queryRow(ctx, q.createTransferStmt, createTransfer, arg.FromAccountID, arg.ToAccountID, arg.Amount)
+	var i Transfer
+	err := row.Scan(
+		&i.ID,
+		&i.FromAccountID,
+		&i.ToAccountID,
+		&i.Amount,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const deleteAccount = `-- name: DeleteAccount :exec
 delete from accounts where id = $1
 `
@@ -53,6 +97,39 @@ func (q *Queries) GetAccount(ctx context.Context, id int64) (Account, error) {
 		&i.Owner,
 		&i.Balance,
 		&i.Currency,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const getEntry = `-- name: GetEntry :one
+select id, account_id, amount, created_at from entries where id = $1
+`
+
+func (q *Queries) GetEntry(ctx context.Context, id int64) (Entry, error) {
+	row := q.queryRow(ctx, q.getEntryStmt, getEntry, id)
+	var i Entry
+	err := row.Scan(
+		&i.ID,
+		&i.AccountID,
+		&i.Amount,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const getTransfer = `-- name: GetTransfer :one
+select id, from_account_id, to_account_id, amount, created_at from transfers where id = $1
+`
+
+func (q *Queries) GetTransfer(ctx context.Context, id int64) (Transfer, error) {
+	row := q.queryRow(ctx, q.getTransferStmt, getTransfer, id)
+	var i Transfer
+	err := row.Scan(
+		&i.ID,
+		&i.FromAccountID,
+		&i.ToAccountID,
+		&i.Amount,
 		&i.CreatedAt,
 	)
 	return i, err
