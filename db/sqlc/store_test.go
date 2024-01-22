@@ -101,3 +101,50 @@ func TestTransferTX(t *testing.T) {
 	require.Equal(t, account1.Balance-amount*int64(n), updatedAccount1.Balance)
 	require.Equal(t, account2.Balance+amount*int64(n), updatedAccount2.Balance)
 }
+
+func TestTransferTXDeadlock(t *testing.T) {
+	store := NewStore(testDB)
+
+	account1 := createTestAccount(t)
+	account2 := createTestAccount(t)
+
+	n := 10
+	amount := int64(10)
+
+	errs := make(chan error)
+
+	for i := 0; i < n; i++ {
+		fromAccountID := account1.ID
+		toAccountID := account2.ID
+
+		if i%2 == 1 {
+			toAccountID = account1.ID
+			fromAccountID = account2.ID
+		}
+
+		go func() {
+			_, err := store.TransferTX(context.Background(), TransferTxParams{
+				FromAccountID: fromAccountID,
+				ToAccountID:   toAccountID,
+				Amount:        amount,
+			})
+
+			errs <- err
+		}()
+	}
+
+	for i := 0; i < n; i++ {
+		err := <-errs
+		require.NoError(t, err)
+
+	}
+
+	updatedAccount1, err := store.GetAccount(context.Background(), account1.ID)
+	require.NoError(t, err)
+
+	updatedAccount2, err := store.GetAccount(context.Background(), account2.ID)
+	require.NoError(t, err)
+
+	require.Equal(t, account1.Balance, updatedAccount1.Balance)
+	require.Equal(t, account2.Balance, updatedAccount2.Balance)
+}
