@@ -23,14 +23,5 @@ update accounts set balance = balance + sqlc.arg(amount) where id = sqlc.arg(id)
 delete from accounts where id = $1;
 
 
--- name: CreateTransfer :one
-insert into transfers(from_account_id, to_account_id, amount) values ($1, $2, $3) returning *;
 
--- name: CreateEntry :one
-insert into entries(account_id, amount) values ($1, $2) returning *;
 
--- name: GetTransfer :one
-select * from transfers where id = $1;
-
--- name: GetEntry :one
-select * from entries where id = $1;
