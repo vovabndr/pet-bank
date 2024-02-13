@@ -36,20 +36,15 @@ jobs:
           echo IMAGE=$REGISTRY/$REPOSITORY >> $GITHUB_ENV
 
       - name: Deploy to EC2
-        run: |
-          mkdir -p $HOME/.ssh
-          ssh-keygen -R ${{ secrets.EC2_INSTANCE_IP }}
-          
-          echo "${{ secrets.EC2_SSH_KEY }}" > ec2-key.pem
-          chmod 600 ec2-key.pem
-        
-          ssh-keyscan -t rsa ${{ secrets.EC2_INSTANCE_IP }}
-          
-          ssh -v -o StrictHostKeyChecking=no -i "ec2-key.pem" ec2-user@${{ secrets.EC2_INSTANCE_IP }} 'bash -s' << EOF
-          docker ps -q | xargs docker stop
-          docker ps -a -q | xargs docker rm
-          docker images -q | xargs docker rmi -f
-          
-          docker pull $IMAGE
-          docker container run -d --name node --publish 8080:8080 $IMAGE
-          EOF
+        uses: easingthemes/ssh-deploy@main
+        with:
+          SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
+          REMOTE_HOST: ${{ secrets.EC2_INSTANCE_IP }}
+          REMOTE_USER: ec2-user
+          SCRIPT_BEFORE: |
+            docker ps -q | xargs docker stop
+            docker ps -a -q | xargs docker rm
+            docker images -q | xargs docker rmi -f
+
+            docker pull $IMAGE
+            docker container run -d --name node --publish 8080:8080 $IMAGE
