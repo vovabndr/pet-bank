@@ -37,9 +37,14 @@ jobs:
 
       - name: Deploy to EC2
         run: |
+          ssh-keygen -R ${{ secrets.EC2_INSTANCE_IP }}
+          
           echo "${{ secrets.EC2_SSH_KEY }}" > ec2-key.pem
           chmod 600 ec2-key.pem
-          ssh -i "ec2-key.pem" ec2-user@${{ secrets.EC2_INSTANCE_IP }} 'bash -s' << EOF
+        
+          ssh-keyscan -t rsa ${{ secrets.EC2_INSTANCE_IP }}
+          
+          ssh -v -o StrictHostKeyChecking=no -i "ec2-key.pem" ec2-user@${{ secrets.EC2_INSTANCE_IP }} 'bash -s' << EOF
           docker ps -q | xargs docker stop
           docker ps -a -q | xargs docker rm
           docker images -q | xargs docker rmi -f
