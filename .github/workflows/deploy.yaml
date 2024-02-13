@@ -44,7 +44,6 @@ jobs:
 #            docker ps -q | xargs docker stop
 #            docker ps -a -q | xargs docker rm
 #            docker images -q | xargs docker rmi -f
-
             IMAGE = ${{ steps.login-ecr.outputs.registry }}/pet-bank-repo:latest
             docker pull $IMAGE
             docker container run -d --name node --publish 8080:8080 $IMAGE
