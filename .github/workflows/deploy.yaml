@@ -37,6 +37,7 @@ jobs:
 
       - name: Deploy to EC2
         run: |
+          mkdir -p $HOME/.ssh
           ssh-keygen -R ${{ secrets.EC2_INSTANCE_IP }}
           
           echo "${{ secrets.EC2_SSH_KEY }}" > ec2-key.pem
