@@ -33,7 +33,6 @@ jobs:
 #        run: |
 #          docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG -t $REGISTRY/$REPOSITORY:latest .
 #          docker push $REGISTRY/$REPOSITORY
-
       - name: Deploy to EC2
         uses: easingthemes/ssh-deploy@main
         with:
@@ -44,6 +43,5 @@ jobs:
 #            docker ps -q | xargs docker stop
 #            docker ps -a -q | xargs docker rm
 #            docker images -q | xargs docker rmi -f
-            IMAGE = ${{ steps.login-ecr.outputs.registry }}/pet-bank-repo:latest
-            docker pull $IMAGE
-            docker container run -d --name node --publish 8080:8080 $IMAGE
+            docker pull ${{ steps.login-ecr.outputs.registry }}/pet-bank-repo:latest
+            docker container run -d --name node --publish 8080:8080 ${{ steps.login-ecr.outputs.registry }}/pet-bank-repo:latest
