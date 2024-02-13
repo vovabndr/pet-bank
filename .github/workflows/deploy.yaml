@@ -3,6 +3,8 @@ name: Deploy to production
 on:
   push:
     branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
 
 jobs:
   build:
@@ -29,5 +31,19 @@ jobs:
           REPOSITORY: pet-bank-repo
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
-          docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
+          docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG -t $REGISTRY/$REPOSITORY:latest .
+          docker push $REGISTRY/$REPOSITORY
+          echo IMAGE=$REGISTRY/$REPOSITORY >> $GITHUB_ENV
+
+      - name: Deploy to EC2
+        run: |
+          echo "${{ secrets.EC2_SSH_KEY }}" > ec2-key.pem
+          chmod 600 ec2-key.pem
+          ssh -i "ec2-key.pem" ec2-user@${{ secrets.EC2_INSTANCE_IP }} 'bash -s' << EOF
+          docker ps -q | xargs docker stop
+          docker ps -a -q | xargs docker rm
+          docker images -q | xargs docker rmi -f
+          
+          docker pull $IMAGE
+          docker container run -d --name node --publish 8080:8080 $IMAGE
+          EOF
