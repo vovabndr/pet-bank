@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	_ "github.com/lib/pq"
+	"github.com/rakyll/statik/fs"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -13,6 +14,7 @@ import (
 	"net/http"
 	"pet-bank/api"
 	db "pet-bank/db/sqlc"
+	_ "pet-bank/doc/statik"
 	"pet-bank/gapi"
 	"pet-bank/pb"
 	"pet-bank/utils"
@@ -95,6 +97,13 @@ func runGatewayServer(config utils.Config, store db.Store) {
 
 	mux := http.NewServeMux()
 	mux.Handle("/", grpcMux)
+
+	statikFS, err := fs.New()
+	if err != nil {
+		log.Fatal("Couldn't create statik fs : ", err)
+	}
+	swaggerHandler := http.StripPrefix("/swagger/", http.FileServer(statikFS))
+	mux.Handle("/swagger/", swaggerHandler)
 
 	listener, err := net.Listen("tcp", config.HTTPServerAddress)
 	if err != nil {
