@@ -42,6 +42,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.createUserStmt, err = db.PrepareContext(ctx, createUser); err != nil {
 		return nil, fmt.Errorf("error preparing query CreateUser: %w", err)
 	}
+	if q.createVerifyEmailStmt, err = db.PrepareContext(ctx, createVerifyEmail); err != nil {
+		return nil, fmt.Errorf("error preparing query CreateVerifyEmail: %w", err)
+	}
 	if q.deleteAccountStmt, err = db.PrepareContext(ctx, deleteAccount); err != nil {
 		return nil, fmt.Errorf("error preparing query DeleteAccount: %w", err)
 	}
@@ -63,6 +66,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.getUserStmt, err = db.PrepareContext(ctx, getUser); err != nil {
 		return nil, fmt.Errorf("error preparing query GetUser: %w", err)
 	}
+	if q.getVerifyEmailStmt, err = db.PrepareContext(ctx, getVerifyEmail); err != nil {
+		return nil, fmt.Errorf("error preparing query GetVerifyEmail: %w", err)
+	}
 	if q.listAccountsStmt, err = db.PrepareContext(ctx, listAccounts); err != nil {
 		return nil, fmt.Errorf("error preparing query ListAccounts: %w", err)
 	}
@@ -71,6 +77,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	}
 	if q.updateUserStmt, err = db.PrepareContext(ctx, updateUser); err != nil {
 		return nil, fmt.Errorf("error preparing query UpdateUser: %w", err)
+	}
+	if q.updateVerifyEmailStmt, err = db.PrepareContext(ctx, updateVerifyEmail); err != nil {
+		return nil, fmt.Errorf("error preparing query UpdateVerifyEmail: %w", err)
 	}
 	return &q, nil
 }
@@ -105,6 +114,11 @@ func (q *Queries) Close() error {
 	if q.createUserStmt != nil {
 		if cerr := q.createUserStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing createUserStmt: %w", cerr)
+		}
+	}
+	if q.createVerifyEmailStmt != nil {
+		if cerr := q.createVerifyEmailStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing createVerifyEmailStmt: %w", cerr)
 		}
 	}
 	if q.deleteAccountStmt != nil {
@@ -142,6 +156,11 @@ func (q *Queries) Close() error {
 			err = fmt.Errorf("error closing getUserStmt: %w", cerr)
 		}
 	}
+	if q.getVerifyEmailStmt != nil {
+		if cerr := q.getVerifyEmailStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing getVerifyEmailStmt: %w", cerr)
+		}
+	}
 	if q.listAccountsStmt != nil {
 		if cerr := q.listAccountsStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing listAccountsStmt: %w", cerr)
@@ -155,6 +174,11 @@ func (q *Queries) Close() error {
 	if q.updateUserStmt != nil {
 		if cerr := q.updateUserStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing updateUserStmt: %w", cerr)
+		}
+	}
+	if q.updateVerifyEmailStmt != nil {
+		if cerr := q.updateVerifyEmailStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing updateVerifyEmailStmt: %w", cerr)
 		}
 	}
 	return err
@@ -202,6 +226,7 @@ type Queries struct {
 	createSessionStmt        *sql.Stmt
 	createTransferStmt       *sql.Stmt
 	createUserStmt           *sql.Stmt
+	createVerifyEmailStmt    *sql.Stmt
 	deleteAccountStmt        *sql.Stmt
 	getAccountStmt           *sql.Stmt
 	getAccountForUpdateStmt  *sql.Stmt
@@ -209,9 +234,11 @@ type Queries struct {
 	getSessionStmt           *sql.Stmt
 	getTransferStmt          *sql.Stmt
 	getUserStmt              *sql.Stmt
+	getVerifyEmailStmt       *sql.Stmt
 	listAccountsStmt         *sql.Stmt
 	updateAccountBalanceStmt *sql.Stmt
 	updateUserStmt           *sql.Stmt
+	updateVerifyEmailStmt    *sql.Stmt
 }
 
 func (q *Queries) WithTx(tx *sql.Tx) *Queries {
@@ -224,6 +251,7 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		createSessionStmt:        q.createSessionStmt,
 		createTransferStmt:       q.createTransferStmt,
 		createUserStmt:           q.createUserStmt,
+		createVerifyEmailStmt:    q.createVerifyEmailStmt,
 		deleteAccountStmt:        q.deleteAccountStmt,
 		getAccountStmt:           q.getAccountStmt,
 		getAccountForUpdateStmt:  q.getAccountForUpdateStmt,
@@ -231,8 +259,10 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		getSessionStmt:           q.getSessionStmt,
 		getTransferStmt:          q.getTransferStmt,
 		getUserStmt:              q.getUserStmt,
+		getVerifyEmailStmt:       q.getVerifyEmailStmt,
 		listAccountsStmt:         q.listAccountsStmt,
 		updateAccountBalanceStmt: q.updateAccountBalanceStmt,
 		updateUserStmt:           q.updateUserStmt,
+		updateVerifyEmailStmt:    q.updateVerifyEmailStmt,
 	}
 }

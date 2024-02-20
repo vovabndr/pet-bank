@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"github.com/hibiken/asynq"
 	"github.com/rs/zerolog/log"
+	db "pet-bank/db/sqlc"
+	"pet-bank/utils"
 )
 import "context"
 
@@ -59,6 +61,33 @@ func (processor *RedisTaskProcessor) ProcessTaskSendVerifyEmail(
 			return fmt.Errorf("user doesn't exist: %w", asynq.SkipRetry)
 		}
 		return fmt.Errorf("failed to get user: %w", err)
+	}
+
+	verifyEmail, err := processor.store.CreateVerifyEmail(ctx, db.CreateVerifyEmailParams{
+		Username:   user.Username,
+		Email:      user.Email,
+		SecretCode: utils.RandomString(32),
+	})
+
+	if err != nil {
+		return fmt.Errorf("failed to create verify email: %w", err)
+	}
+
+	to := []string{user.Email}
+	subject := "Welcome to pet-bank"
+	verifyUrl := fmt.Sprintf(
+		"http://%s/v1/verify_email?email_id=%d&secret_code=%s",
+		processor.config.VerifyUrl,
+		verifyEmail.ID,
+		verifyEmail.SecretCode,
+	)
+	content := fmt.Sprintf(`Hello %s,<br/>
+	Please <a href="%s">click here</a> to verify your email address. 
+	`, user.Username, verifyUrl)
+	err = processor.mailer.SendEmail(subject, content, to, nil, nil, nil)
+
+	if err != nil {
+		return fmt.Errorf("faild to sent verify email: %w", err)
 	}
 
 	log.Info().

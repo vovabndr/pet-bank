@@ -23,6 +23,7 @@ import (
 	db "pet-bank/db/sqlc"
 	_ "pet-bank/doc/statik"
 	"pet-bank/gapi"
+	"pet-bank/mail"
 	"pet-bank/pb"
 	"pet-bank/utils"
 	"pet-bank/worker"
@@ -49,7 +50,7 @@ func main() {
 	taskDistributor := worker.NewRedisTaskDistributor(redisOpt)
 
 	runDBMigration(config.MigrationURL, config.DBSource)
-	go runTaskProcessor(redisOpt, store)
+	go runTaskProcessor(redisOpt, store, config)
 	go runGatewayServer(config, store, taskDistributor)
 	runGrpcServer(config, store, taskDistributor)
 }
@@ -149,8 +150,9 @@ func runGatewayServer(config utils.Config, store db.Store, td worker.TaskDistrib
 	}
 }
 
-func runTaskProcessor(opt asynq.RedisClientOpt, store db.Store) {
-	taskProcessor := worker.NewRedisTaskProcessor(opt, store)
+func runTaskProcessor(opt asynq.RedisClientOpt, store db.Store, config utils.Config) {
+	mailer := mail.NewGmailSender(config.EmailSenderName, config.EmailSenderAddress, config.EmailSenderPassword)
+	taskProcessor := worker.NewRedisTaskProcessor(opt, store, mailer, config)
 	log.Info().Msg("start task processor")
 	if err := taskProcessor.Start(); err != nil {
 		log.Fatal().Err(err).Msg("failed to start task processor")
