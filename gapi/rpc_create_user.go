@@ -3,11 +3,9 @@ package gapi
 import (
 	"context"
 	"github.com/hibiken/asynq"
-	"github.com/lib/pq"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"log"
 	db "pet-bank/db/sqlc"
 	"pet-bank/pb"
 	"pet-bank/utils"
@@ -54,13 +52,10 @@ func (server *Server) CreateUser(ctx context.Context, req *pb.CreateUserRequest)
 	txResult, err := server.store.CreateUserTx(ctx, arg)
 
 	if err != nil {
-		if pqErr, ok := err.(*pq.Error); ok {
-			log.Println(pqErr.Code.Name())
-			switch pqErr.Code.Name() {
-			case "unique_violation":
-				return nil, status.Errorf(codes.AlreadyExists, "username already exist: %s", err)
-			}
+		if db.ErrorCode(err) == db.UniqueViolation {
+			return nil, status.Errorf(codes.AlreadyExists, err.Error())
 		}
+
 		return nil, status.Errorf(codes.Internal, "failed to create user: %s", err)
 	}
 

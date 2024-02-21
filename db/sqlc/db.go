@@ -6,263 +6,27 @@ package db
 
 import (
 	"context"
-	"database/sql"
-	"fmt"
+
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 type DBTX interface {
-	ExecContext(context.Context, string, ...interface{}) (sql.Result, error)
-	PrepareContext(context.Context, string) (*sql.Stmt, error)
-	QueryContext(context.Context, string, ...interface{}) (*sql.Rows, error)
-	QueryRowContext(context.Context, string, ...interface{}) *sql.Row
+	Exec(context.Context, string, ...interface{}) (pgconn.CommandTag, error)
+	Query(context.Context, string, ...interface{}) (pgx.Rows, error)
+	QueryRow(context.Context, string, ...interface{}) pgx.Row
 }
 
 func New(db DBTX) *Queries {
 	return &Queries{db: db}
 }
 
-func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
-	q := Queries{db: db}
-	var err error
-	if q.addAccountBalanceStmt, err = db.PrepareContext(ctx, addAccountBalance); err != nil {
-		return nil, fmt.Errorf("error preparing query AddAccountBalance: %w", err)
-	}
-	if q.createAccountStmt, err = db.PrepareContext(ctx, createAccount); err != nil {
-		return nil, fmt.Errorf("error preparing query CreateAccount: %w", err)
-	}
-	if q.createEntryStmt, err = db.PrepareContext(ctx, createEntry); err != nil {
-		return nil, fmt.Errorf("error preparing query CreateEntry: %w", err)
-	}
-	if q.createSessionStmt, err = db.PrepareContext(ctx, createSession); err != nil {
-		return nil, fmt.Errorf("error preparing query CreateSession: %w", err)
-	}
-	if q.createTransferStmt, err = db.PrepareContext(ctx, createTransfer); err != nil {
-		return nil, fmt.Errorf("error preparing query CreateTransfer: %w", err)
-	}
-	if q.createUserStmt, err = db.PrepareContext(ctx, createUser); err != nil {
-		return nil, fmt.Errorf("error preparing query CreateUser: %w", err)
-	}
-	if q.createVerifyEmailStmt, err = db.PrepareContext(ctx, createVerifyEmail); err != nil {
-		return nil, fmt.Errorf("error preparing query CreateVerifyEmail: %w", err)
-	}
-	if q.deleteAccountStmt, err = db.PrepareContext(ctx, deleteAccount); err != nil {
-		return nil, fmt.Errorf("error preparing query DeleteAccount: %w", err)
-	}
-	if q.getAccountStmt, err = db.PrepareContext(ctx, getAccount); err != nil {
-		return nil, fmt.Errorf("error preparing query GetAccount: %w", err)
-	}
-	if q.getAccountForUpdateStmt, err = db.PrepareContext(ctx, getAccountForUpdate); err != nil {
-		return nil, fmt.Errorf("error preparing query GetAccountForUpdate: %w", err)
-	}
-	if q.getEntryStmt, err = db.PrepareContext(ctx, getEntry); err != nil {
-		return nil, fmt.Errorf("error preparing query GetEntry: %w", err)
-	}
-	if q.getSessionStmt, err = db.PrepareContext(ctx, getSession); err != nil {
-		return nil, fmt.Errorf("error preparing query GetSession: %w", err)
-	}
-	if q.getTransferStmt, err = db.PrepareContext(ctx, getTransfer); err != nil {
-		return nil, fmt.Errorf("error preparing query GetTransfer: %w", err)
-	}
-	if q.getUserStmt, err = db.PrepareContext(ctx, getUser); err != nil {
-		return nil, fmt.Errorf("error preparing query GetUser: %w", err)
-	}
-	if q.getVerifyEmailStmt, err = db.PrepareContext(ctx, getVerifyEmail); err != nil {
-		return nil, fmt.Errorf("error preparing query GetVerifyEmail: %w", err)
-	}
-	if q.listAccountsStmt, err = db.PrepareContext(ctx, listAccounts); err != nil {
-		return nil, fmt.Errorf("error preparing query ListAccounts: %w", err)
-	}
-	if q.updateAccountBalanceStmt, err = db.PrepareContext(ctx, updateAccountBalance); err != nil {
-		return nil, fmt.Errorf("error preparing query UpdateAccountBalance: %w", err)
-	}
-	if q.updateUserStmt, err = db.PrepareContext(ctx, updateUser); err != nil {
-		return nil, fmt.Errorf("error preparing query UpdateUser: %w", err)
-	}
-	if q.updateVerifyEmailStmt, err = db.PrepareContext(ctx, updateVerifyEmail); err != nil {
-		return nil, fmt.Errorf("error preparing query UpdateVerifyEmail: %w", err)
-	}
-	return &q, nil
-}
-
-func (q *Queries) Close() error {
-	var err error
-	if q.addAccountBalanceStmt != nil {
-		if cerr := q.addAccountBalanceStmt.Close(); cerr != nil {
-			err = fmt.Errorf("error closing addAccountBalanceStmt: %w", cerr)
-		}
-	}
-	if q.createAccountStmt != nil {
-		if cerr := q.createAccountStmt.Close(); cerr != nil {
-			err = fmt.Errorf("error closing createAccountStmt: %w", cerr)
-		}
-	}
-	if q.createEntryStmt != nil {
-		if cerr := q.createEntryStmt.Close(); cerr != nil {
-			err = fmt.Errorf("error closing createEntryStmt: %w", cerr)
-		}
-	}
-	if q.createSessionStmt != nil {
-		if cerr := q.createSessionStmt.Close(); cerr != nil {
-			err = fmt.Errorf("error closing createSessionStmt: %w", cerr)
-		}
-	}
-	if q.createTransferStmt != nil {
-		if cerr := q.createTransferStmt.Close(); cerr != nil {
-			err = fmt.Errorf("error closing createTransferStmt: %w", cerr)
-		}
-	}
-	if q.createUserStmt != nil {
-		if cerr := q.createUserStmt.Close(); cerr != nil {
-			err = fmt.Errorf("error closing createUserStmt: %w", cerr)
-		}
-	}
-	if q.createVerifyEmailStmt != nil {
-		if cerr := q.createVerifyEmailStmt.Close(); cerr != nil {
-			err = fmt.Errorf("error closing createVerifyEmailStmt: %w", cerr)
-		}
-	}
-	if q.deleteAccountStmt != nil {
-		if cerr := q.deleteAccountStmt.Close(); cerr != nil {
-			err = fmt.Errorf("error closing deleteAccountStmt: %w", cerr)
-		}
-	}
-	if q.getAccountStmt != nil {
-		if cerr := q.getAccountStmt.Close(); cerr != nil {
-			err = fmt.Errorf("error closing getAccountStmt: %w", cerr)
-		}
-	}
-	if q.getAccountForUpdateStmt != nil {
-		if cerr := q.getAccountForUpdateStmt.Close(); cerr != nil {
-			err = fmt.Errorf("error closing getAccountForUpdateStmt: %w", cerr)
-		}
-	}
-	if q.getEntryStmt != nil {
-		if cerr := q.getEntryStmt.Close(); cerr != nil {
-			err = fmt.Errorf("error closing getEntryStmt: %w", cerr)
-		}
-	}
-	if q.getSessionStmt != nil {
-		if cerr := q.getSessionStmt.Close(); cerr != nil {
-			err = fmt.Errorf("error closing getSessionStmt: %w", cerr)
-		}
-	}
-	if q.getTransferStmt != nil {
-		if cerr := q.getTransferStmt.Close(); cerr != nil {
-			err = fmt.Errorf("error closing getTransferStmt: %w", cerr)
-		}
-	}
-	if q.getUserStmt != nil {
-		if cerr := q.getUserStmt.Close(); cerr != nil {
-			err = fmt.Errorf("error closing getUserStmt: %w", cerr)
-		}
-	}
-	if q.getVerifyEmailStmt != nil {
-		if cerr := q.getVerifyEmailStmt.Close(); cerr != nil {
-			err = fmt.Errorf("error closing getVerifyEmailStmt: %w", cerr)
-		}
-	}
-	if q.listAccountsStmt != nil {
-		if cerr := q.listAccountsStmt.Close(); cerr != nil {
-			err = fmt.Errorf("error closing listAccountsStmt: %w", cerr)
-		}
-	}
-	if q.updateAccountBalanceStmt != nil {
-		if cerr := q.updateAccountBalanceStmt.Close(); cerr != nil {
-			err = fmt.Errorf("error closing updateAccountBalanceStmt: %w", cerr)
-		}
-	}
-	if q.updateUserStmt != nil {
-		if cerr := q.updateUserStmt.Close(); cerr != nil {
-			err = fmt.Errorf("error closing updateUserStmt: %w", cerr)
-		}
-	}
-	if q.updateVerifyEmailStmt != nil {
-		if cerr := q.updateVerifyEmailStmt.Close(); cerr != nil {
-			err = fmt.Errorf("error closing updateVerifyEmailStmt: %w", cerr)
-		}
-	}
-	return err
-}
-
-func (q *Queries) exec(ctx context.Context, stmt *sql.Stmt, query string, args ...interface{}) (sql.Result, error) {
-	switch {
-	case stmt != nil && q.tx != nil:
-		return q.tx.StmtContext(ctx, stmt).ExecContext(ctx, args...)
-	case stmt != nil:
-		return stmt.ExecContext(ctx, args...)
-	default:
-		return q.db.ExecContext(ctx, query, args...)
-	}
-}
-
-func (q *Queries) query(ctx context.Context, stmt *sql.Stmt, query string, args ...interface{}) (*sql.Rows, error) {
-	switch {
-	case stmt != nil && q.tx != nil:
-		return q.tx.StmtContext(ctx, stmt).QueryContext(ctx, args...)
-	case stmt != nil:
-		return stmt.QueryContext(ctx, args...)
-	default:
-		return q.db.QueryContext(ctx, query, args...)
-	}
-}
-
-func (q *Queries) queryRow(ctx context.Context, stmt *sql.Stmt, query string, args ...interface{}) *sql.Row {
-	switch {
-	case stmt != nil && q.tx != nil:
-		return q.tx.StmtContext(ctx, stmt).QueryRowContext(ctx, args...)
-	case stmt != nil:
-		return stmt.QueryRowContext(ctx, args...)
-	default:
-		return q.db.QueryRowContext(ctx, query, args...)
-	}
-}
-
 type Queries struct {
-	db                       DBTX
-	tx                       *sql.Tx
-	addAccountBalanceStmt    *sql.Stmt
-	createAccountStmt        *sql.Stmt
-	createEntryStmt          *sql.Stmt
-	createSessionStmt        *sql.Stmt
-	createTransferStmt       *sql.Stmt
-	createUserStmt           *sql.Stmt
-	createVerifyEmailStmt    *sql.Stmt
-	deleteAccountStmt        *sql.Stmt
-	getAccountStmt           *sql.Stmt
-	getAccountForUpdateStmt  *sql.Stmt
-	getEntryStmt             *sql.Stmt
-	getSessionStmt           *sql.Stmt
-	getTransferStmt          *sql.Stmt
-	getUserStmt              *sql.Stmt
-	getVerifyEmailStmt       *sql.Stmt
-	listAccountsStmt         *sql.Stmt
-	updateAccountBalanceStmt *sql.Stmt
-	updateUserStmt           *sql.Stmt
-	updateVerifyEmailStmt    *sql.Stmt
+	db DBTX
 }
 
-func (q *Queries) WithTx(tx *sql.Tx) *Queries {
+func (q *Queries) WithTx(tx pgx.Tx) *Queries {
 	return &Queries{
-		db:                       tx,
-		tx:                       tx,
-		addAccountBalanceStmt:    q.addAccountBalanceStmt,
-		createAccountStmt:        q.createAccountStmt,
-		createEntryStmt:          q.createEntryStmt,
-		createSessionStmt:        q.createSessionStmt,
-		createTransferStmt:       q.createTransferStmt,
-		createUserStmt:           q.createUserStmt,
-		createVerifyEmailStmt:    q.createVerifyEmailStmt,
-		deleteAccountStmt:        q.deleteAccountStmt,
-		getAccountStmt:           q.getAccountStmt,
-		getAccountForUpdateStmt:  q.getAccountForUpdateStmt,
-		getEntryStmt:             q.getEntryStmt,
-		getSessionStmt:           q.getSessionStmt,
-		getTransferStmt:          q.getTransferStmt,
-		getUserStmt:              q.getUserStmt,
-		getVerifyEmailStmt:       q.getVerifyEmailStmt,
-		listAccountsStmt:         q.listAccountsStmt,
-		updateAccountBalanceStmt: q.updateAccountBalanceStmt,
-		updateUserStmt:           q.updateUserStmt,
-		updateVerifyEmailStmt:    q.updateVerifyEmailStmt,
+		db: tx,
 	}
 }

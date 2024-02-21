@@ -7,7 +7,8 @@ package db
 
 import (
 	"context"
-	"database/sql"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const createUser = `-- name: CreateUser :one
@@ -22,7 +23,7 @@ type CreateUserParams struct {
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
-	row := q.queryRow(ctx, q.createUserStmt, createUser,
+	row := q.db.QueryRow(ctx, createUser,
 		arg.Username,
 		arg.HashedPassword,
 		arg.FullName,
@@ -46,7 +47,7 @@ select username, hashed_password, full_name, email, password_changed_at, created
 `
 
 func (q *Queries) GetUser(ctx context.Context, username string) (User, error) {
-	row := q.queryRow(ctx, q.getUserStmt, getUser, username)
+	row := q.db.QueryRow(ctx, getUser, username)
 	var i User
 	err := row.Scan(
 		&i.Username,
@@ -65,23 +66,23 @@ update users
 set hashed_password     = coalesce($1, hashed_password),
     password_changed_at = coalesce($2, password_changed_at),
     full_name           = coalesce($3, full_name),
-    email               = coalesce($4, email),
-    is_email_verified   = coalesce($5, is_email_verified)
+    email             = coalesce($4, email),
+    is_email_verified = coalesce($5, is_email_verified)
 where username = $6
 returning username, hashed_password, full_name, email, password_changed_at, created_at, is_email_verified
 `
 
 type UpdateUserParams struct {
-	HashedPassword    sql.NullString `json:"hashed_password"`
-	PasswordChangedAt sql.NullTime   `json:"password_changed_at"`
-	FullName          sql.NullString `json:"full_name"`
-	Email             sql.NullString `json:"email"`
-	IsEmailVerified   sql.NullBool   `json:"is_email_verified"`
-	Username          string         `json:"username"`
+	HashedPassword    pgtype.Text        `json:"hashed_password"`
+	PasswordChangedAt pgtype.Timestamptz `json:"password_changed_at"`
+	FullName          pgtype.Text        `json:"full_name"`
+	Email             pgtype.Text        `json:"email"`
+	IsEmailVerified   pgtype.Bool        `json:"is_email_verified"`
+	Username          string             `json:"username"`
 }
 
 func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error) {
-	row := q.queryRow(ctx, q.updateUserStmt, updateUser,
+	row := q.db.QueryRow(ctx, updateUser,
 		arg.HashedPassword,
 		arg.PasswordChangedAt,
 		arg.FullName,
