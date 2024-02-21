@@ -5,6 +5,7 @@ package pb;
 import "rpc_create_user.proto";
 import "rpc_update_user.proto";
 import "rpc_login_user.proto";
+import "rpc_verify_email.proto";
 import "google/api/annotations.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
 
@@ -13,7 +14,7 @@ option go_package = "pet-bank/pb";
 option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
   info: {
     title: "Pet Bank API";
-    version: "1.1";
+    version: "1.3";
     contact: {
       name: "Pet Bank";
       url: "https://github.com/vovabndr/pet-bank";
@@ -55,6 +56,17 @@ service PetBank {
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       description: "Use this API to login and get access and refresh token.";
       summary: "Login user";
+    };
+  }
+
+  rpc VerifyEmail (VerifyEmailRequest) returns (VerifyEmailResponse) {
+    option (google.api.http) = {
+      get: "/v1/verify_email"
+    };
+
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      description: "Use this API verify user's email address.";
+      summary: "Verify email";
     };
   }
 }
