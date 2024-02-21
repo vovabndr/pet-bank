@@ -61,7 +61,7 @@ func (server *Server) CreateUser(ctx context.Context, req *pb.CreateUserRequest)
 				return nil, status.Errorf(codes.AlreadyExists, "username already exist: %s", err)
 			}
 		}
-		return nil, status.Errorf(codes.AlreadyExists, "failed to create user: %s", err)
+		return nil, status.Errorf(codes.Internal, "failed to create user: %s", err)
 	}
 
 	response := &pb.CreateUserResponse{User: convertUser(txResult.User)}

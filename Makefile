@@ -35,6 +35,7 @@ server:
 
 mock:
 	mockgen -package mockdb -destination db/mock/store.go pet-bank/db/sqlc Store
+	mockgen -package mockwk -destination worker/mock/distributor.go pet-bank/worker TaskDistributor
 
 proto:
 	rm -f pb/*.go
