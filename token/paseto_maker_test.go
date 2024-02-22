@@ -14,8 +14,9 @@ func TestPasetoMaker(t *testing.T) {
 	require.NoError(t, err)
 
 	username := utils.RandomOwner()
+	role := utils.DepositorRole
 
-	token, payload, err := maker.CreateToken(username, time.Minute)
+	token, payload, err := maker.CreateToken(username, role, time.Minute)
 	require.NoError(t, err)
 	require.NotEmpty(t, token)
 	require.NotEmpty(t, payload)
@@ -26,4 +27,5 @@ func TestPasetoMaker(t *testing.T) {
 
 	require.NotZero(t, payload.ID)
 	require.Equal(t, payload.Username, username)
+	require.Equal(t, payload.Role, role)
 }
