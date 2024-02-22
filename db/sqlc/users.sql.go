@@ -12,7 +12,7 @@ import (
 )
 
 const createUser = `-- name: CreateUser :one
-insert into users(username, hashed_password, full_name, email) values ($1, $2, $3, $4) returning username, hashed_password, full_name, email, password_changed_at, created_at, is_email_verified
+insert into users(username, hashed_password, full_name, email) values ($1, $2, $3, $4) returning username, hashed_password, full_name, email, password_changed_at, created_at, is_email_verified, role
 `
 
 type CreateUserParams struct {
@@ -38,12 +38,13 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.PasswordChangedAt,
 		&i.CreatedAt,
 		&i.IsEmailVerified,
+		&i.Role,
 	)
 	return i, err
 }
 
 const getUser = `-- name: GetUser :one
-select username, hashed_password, full_name, email, password_changed_at, created_at, is_email_verified from users where username = $1 limit 1
+select username, hashed_password, full_name, email, password_changed_at, created_at, is_email_verified, role from users where username = $1 limit 1
 `
 
 func (q *Queries) GetUser(ctx context.Context, username string) (User, error) {
@@ -57,6 +58,7 @@ func (q *Queries) GetUser(ctx context.Context, username string) (User, error) {
 		&i.PasswordChangedAt,
 		&i.CreatedAt,
 		&i.IsEmailVerified,
+		&i.Role,
 	)
 	return i, err
 }
@@ -69,7 +71,7 @@ set hashed_password     = coalesce($1, hashed_password),
     email             = coalesce($4, email),
     is_email_verified = coalesce($5, is_email_verified)
 where username = $6
-returning username, hashed_password, full_name, email, password_changed_at, created_at, is_email_verified
+returning username, hashed_password, full_name, email, password_changed_at, created_at, is_email_verified, role
 `
 
 type UpdateUserParams struct {
@@ -99,6 +101,7 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, e
 		&i.PasswordChangedAt,
 		&i.CreatedAt,
 		&i.IsEmailVerified,
+		&i.Role,
 	)
 	return i, err
 }

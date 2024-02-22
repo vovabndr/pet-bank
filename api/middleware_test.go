@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"pet-bank/token"
+	"pet-bank/utils"
 	"testing"
 	"time"
 )
@@ -17,9 +18,10 @@ func addAuthorization(
 	maker token.Maker,
 	authType string,
 	username string,
+	role string,
 	duration time.Duration,
 ) {
-	createdToken, payload, err := maker.CreateToken(username, duration)
+	createdToken, payload, err := maker.CreateToken(username, role, duration)
 	require.NoError(t, err)
 	require.NotEmpty(t, payload)
 
@@ -37,7 +39,7 @@ func TestAuthMiddleware(t *testing.T) {
 		{
 			name: "ok",
 			setupAuth: func(t *testing.T, req *http.Request, maker token.Maker) {
-				addAuthorization(t, req, maker, authorizationTypeBearer, "user", time.Minute)
+				addAuthorization(t, req, maker, authorizationTypeBearer, "user", utils.DepositorRole, time.Minute)
 			},
 			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusOK, recorder.Code)
@@ -46,7 +48,7 @@ func TestAuthMiddleware(t *testing.T) {
 		{
 			name: "unsupported auth",
 			setupAuth: func(t *testing.T, req *http.Request, maker token.Maker) {
-				addAuthorization(t, req, maker, "basic", "user", time.Minute)
+				addAuthorization(t, req, maker, "basic", "user", utils.DepositorRole, time.Minute)
 			},
 			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusUnauthorized, recorder.Code)
@@ -55,7 +57,7 @@ func TestAuthMiddleware(t *testing.T) {
 		{
 			name: "invalid auth format",
 			setupAuth: func(t *testing.T, req *http.Request, maker token.Maker) {
-				addAuthorization(t, req, maker, "", "user", time.Minute)
+				addAuthorization(t, req, maker, "", "user", utils.DepositorRole, time.Minute)
 			},
 			checkResponse: func(t *testing.T, recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusUnauthorized, recorder.Code)
